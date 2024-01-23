@@ -26,7 +26,14 @@
         executable: /bin/bash
 
     - name: Renew client ID keys (modify as per your renewal process)
-      ansible.builtin.command: cmd="your-command-to-renew-keys"
+      ansible.builtin.command: cmd="az ad sp create-for-rbac --name your-app-name --role Contributor --scopes /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ resource_group }}"        # "your-command-to-renew-keys"
+      register: azure_sp_output
+      args:
+        executable: /bin/bash
+    - name: Store new credentials in variables
+      ansible.builtin.set_fact:
+        new_azure_client_id: "{{ azure_sp_output.stdout | from_json | json_query('appId') }}"
+        new_azure_client_secret: "{{ azure_sp_output.stdout | from_json | json_query('password') }}"
 
     - name: Log out from Azure
       ansible.builtin.command: cmd="az logout"
