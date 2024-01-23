@@ -1,0 +1,42 @@
+---
+- name: Renew Azure Client ID Keys
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    azure_subscription_id: "your_azure_subscription_id"
+    azure_client_id: "your_azure_client_id"
+    azure_client_secret: "your_azure_client_secret"
+    azure_tenant_id: "your_azure_tenant_id"
+    resource_group: "your_azure_resource_group"
+
+  tasks:
+    - name: Ensure Azure CLI is installed
+      ansible.builtin.command: cmd="az --version"
+      ignore_errors: yes
+      register: azure_cli_installed
+
+    - name: Install Azure CLI
+      ansible.builtin.command: cmd="sudo apt-get update && sudo apt-get install -y azure-cli"
+      when: azure_cli_installed.rc != 0
+
+    - name: Log in to Azure
+      ansible.builtin.command: cmd="az login --service-principal -u {{ azure_client_id }} -p {{ azure_client_secret }} --tenant {{ azure_tenant_id }}"
+      args:
+        executable: /bin/bash
+
+    - name: Renew client ID keys (modify as per your renewal process)
+      ansible.builtin.command: cmd="your-command-to-renew-keys"
+
+    - name: Log out from Azure
+      ansible.builtin.command: cmd="az logout"
+
+    - name: Update Azure Client ID keys expiration date in a file (modify as per your requirements)
+      ansible.builtin.lineinfile:
+        path: "/path/to/expiration_date.txt"
+        line: "ExpirationDate: {{ ansible_date_time.date }}"
+
+    - name: Print expiration date
+      ansible.builtin.debug:
+        msg: "Client ID keys renewed. New expiration date: {{ ansible_date_time.date }}"
+
